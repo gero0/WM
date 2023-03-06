@@ -8,7 +8,7 @@ import pathlib
 M = 64
 N = 2048
 IMG_SIZE = 800
-
+Ms = np.linspace(-M / 2, M / 2, 64)
 
 def polar_to_cart(r, ang):
     x = r * cos(ang)
@@ -31,10 +31,10 @@ def draw_prop(path, i, m, img_size):
     print(f"{path}/prop{i}.png")
     img.save(f"{path}/prop{i}.png")
 
+def main():
+    pathlib.Path("images").mkdir(exist_ok=True)
+    for i, m in enumerate(Ms):
+        draw_prop("images", i, m, IMG_SIZE)
 
-ms = np.linspace(-M / 2, M / 2, 64)
-
-pathlib.Path("images").mkdir(exist_ok=True)
-
-for i, m in enumerate(ms):
-    draw_prop("images", i, m, IMG_SIZE)
+if __name__=='__main__':
+    main()
