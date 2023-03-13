@@ -6,7 +6,7 @@ import pathlib
 
 M = 64
 N = 2048
-IMG_SIZE = 512
+IMG_SIZE = 256
 Ms = np.linspace(-M / 2, M / 2, 64)
 
 
