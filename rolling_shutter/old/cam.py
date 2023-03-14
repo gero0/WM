@@ -1,7 +1,7 @@
 import pathlib
 from PIL import Image
 
-l = 2
+l = 16
 K = 256
 frames = 64
 IMG_SIZE = 256
