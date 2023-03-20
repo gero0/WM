@@ -1,8 +1,6 @@
 import time
-from math import ceil
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy as sp
 from scipy.interpolate import interp1d
 
 
@@ -70,8 +68,8 @@ def main():
     mse_our = mse(y, inter_y)
     mse_sci = mse(y, sci_y)
 
-    mae_our = mse(y, inter_y)
-    mae_sci = mse(y, sci_y)
+    mae_our = mae(y, inter_y)
+    mae_sci = mae(y, sci_y)
 
     print(f"MSE our: {mse_our} | MSE Scipy: {mse_sci}")
     print(f"MAE our: {mae_our} | MAE Scipy: {mae_sci}")
