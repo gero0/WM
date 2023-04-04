@@ -1,23 +1,13 @@
-from math import ceil, floor
 import time
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
-
-def boxcar(x):
-    if (x > -1 / 2 and x <= 1 / 2):
-        return 1
-
-    return 0
-
+def boxcar(x, l = -0.5, r = 0.5):
+    return (x > l) * (x <= r)
 
 def triangular(x):
-    if abs(x) < 1:
-        return 1 - abs(x)
-    else:
-        return 0
-
+    return (1 - abs(x)) * boxcar(x, -1, 1)
 
 def interpolate(x_r, x_dec, y_dec, kernel):
     y_vals = []
@@ -30,13 +20,11 @@ def interpolate(x_r, x_dec, y_dec, kernel):
 
     return y_vals
 
-
 def coeffs(y1, y2, y3, x1, x2, x3):
     [a, b, c] = np.matmul(
         np.linalg.inv([[x1**2, x1, 1], [x2**2, x2, 1], [x3**2, x3, 1]]),
         [y1, y2, y3])
     return a, b, c
-
 
 def quadratic(x_r, x_dec, y_dec):
     y_vals = [y_dec[0]]
@@ -54,22 +42,11 @@ def quadratic(x_r, x_dec, y_dec):
 
     return y_vals
 
-
 def mse(y_real, y_pred):
-    acc = 0
-    for (y1, y2) in zip(y_real, y_pred):
-        acc += (y1 - y2)**2
-
-    return acc / len(y_real)
-
+    return  np.mean(np.square(np.subtract(y_real, y_pred)))
 
 def mae(y_real, y_pred):
-    acc = 0
-    for (y1, y2) in zip(y_real, y_pred):
-        acc += abs(y2 - y1)
-
-    return acc / len(y_real)
-
+    return np.mean(np.abs(np.subtract(y_real, y_pred)))
 
 def compare_interps(kind, t, y, x_remap, x_dec, y_dec):
     print(f"\n{kind} interpolation:")
@@ -106,7 +83,6 @@ def compare_interps(kind, t, y, x_remap, x_dec, y_dec):
     plt.plot(t, inter_y, 'r')
     plt.plot(t, sci_y, 'g')
     plt.savefig(f"{kind}.png")
-
 
 def main():
     dec_factor = 10
