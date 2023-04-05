@@ -39,7 +39,7 @@ def quadratic(x_r, x_dec, y_dec):
         a, b, c = coeffs(xs, ys)
         for x in x_r:
             if (x > xs[0]) and (x < xs[2]):
-                y = a * (x**2) + b * x + c
+                y = a * x**2 + b * x + c
                 y_vals.append(y)
             elif (x == xs[2]):
                 y_vals.append(ys[2])
@@ -54,15 +54,15 @@ def cubic_interp(x_r, x_dec, y_dec):
 
     def c(k):
         if(k==-1):
-            return (3 * y_dec[0] - 3*y_dec[1] + y_dec[2])
+            return (3 * y_dec[0] - 3 * y_dec[1] + y_dec[2])
         if(k == len(x_dec)):
-            return (3 * y_dec[-1] - 3*y_dec[-2] + y_dec[-3])
+            return (3 * y_dec[-1] - 3 * y_dec[-2] + y_dec[-3])
         
         return y_dec[k]
     
     def x_k(k):
         if(k == -1):
-            return x_dec[0]-dist
+            return x_dec[0] - dist
         if(k == len(x_dec)):
             return x_dec[-1] + dist
 
@@ -135,7 +135,7 @@ def main():
     dec_factor = 10
 
     t = np.linspace(0, 100, 1001)
-    y = [t[i]**2 + 3 * t[i] + 1 for i in range(len(t))]
+    y = t**2 + 3 * t + 1
     x_remap = [x / dec_factor for x in range(0, len(t))]
     x_dec = x_remap[::10]
     y_dec = y[::10]
