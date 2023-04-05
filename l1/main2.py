@@ -26,25 +26,23 @@ def interpolate(x_r, x_dec, y_dec, kernel):
         y_vals.append(acc)
     return y_vals
 
-def coeffs(y1, y2, y3, x1, x2, x3):
-    [a, b, c] = np.matmul(
-        np.linalg.inv([[x1**2, x1, 1], [x2**2, x2, 1], [x3**2, x3, 1]]),
-        [y1, y2, y3])
-    return a, b, c
+def coeffs(x, y):
+    if len(x) != len(y) or len(x) != 3: raise ValueError("Quadratic interpolation requires 3 points")
+    return np.linalg.solve(np.array([[x[0]**2, x[0], 1], [x[1]**2, x[1], 1], [x[2]**2, x[2], 1]]), np.array([y[0], y[1], y[2]]))
 
 def quadratic(x_r, x_dec, y_dec):
     y_vals = [y_dec[0]]
 
     for i in range(1, len(x_dec) - 1, 2):
-        x1, x2, x3 = x_dec[i - 1], x_dec[i], x_dec[i + 1]
-        y1, y2, y3 = y_dec[i - 1], y_dec[i], y_dec[i + 1]
-        a, b, c = coeffs(y1, y2, y3, x1, x2, x3)
+        xs = [x_dec[i - 1], x_dec[i], x_dec[i + 1]]
+        ys = [y_dec[i - 1], y_dec[i], y_dec[i + 1]]
+        a, b, c = coeffs(xs, ys)
         for x in x_r:
-            if (x > x1) and (x < x3):
+            if (x > xs[0]) and (x < xs[2]):
                 y = a * (x**2) + b * x + c
                 y_vals.append(y)
-            elif (x == x3):
-                y_vals.append(y3)
+            elif (x == xs[2]):
+                y_vals.append(ys[2])
 
     return y_vals
 
