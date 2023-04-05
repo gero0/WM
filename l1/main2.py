@@ -48,6 +48,47 @@ def quadratic(x_r, x_dec, y_dec):
 
     return y_vals
 
+def cubic_interp(x_r, x_dec, y_dec):
+    y_vals = []
+
+    #distance between two x'es - assuming points are sampled at equal intervals
+    dist = x_dec[1] - x_dec[0]
+
+    def c(k):
+        if(k==-1):
+            return (3 * y_dec[0] - 3*y_dec[1] + y_dec[2])
+        if(k == len(x_dec)):
+            return (3 * y_dec[-1] - 3*y_dec[-2] + y_dec[-3])
+        
+        return y_dec[k]
+    
+    def x_k(k):
+        if(k == -1):
+            return x_dec[0]-dist
+        if(k == len(x_dec)):
+            return x_dec[-1] + dist
+
+        return x_dec[k]
+    
+    """
+    https://www.ncorr.com/download/publications/keysbicubic.pdf
+    According to the paper we need to convolve from k=-1 to k=N+1.
+    The paper also says we know samples from range k=0 to k=N, while here.
+    we only know range k=0 to k=N-1, that's why N+1 is excluded in our calculations.
+    Idk why but it works.
+    c_k and x_k are helper functions that define values for x and y outside of known range.
+    For x we're just adding/subtracting interval between points (it must be constant between points for this to make sense).
+    The y values are calculated based on equations from the paper.
+    The rest is just ye olde convolution.
+    """
+    for x in x_r:
+        acc = 0
+        for k in range(-1, len(x_dec) + 1):
+            acc += c(k) * keys(x - x_k(k))
+
+        y_vals.append(acc)
+    return y_vals
+
 def mse(y_real, y_pred):
     return  np.mean(np.square(np.subtract(y_real, y_pred)))
 
@@ -65,7 +106,7 @@ def compare_interps(kind, t, y, x_remap, x_dec, y_dec):
     elif (kind == "quadratic"):
         inter_y = quadratic(x_remap, x_dec, y_dec)
     elif (kind == "cubic"):
-        inter_y = interpolate(x_remap, x_dec, y_dec, keys)
+        inter_y = cubic_interp(x_remap, x_dec, y_dec)
     else:
         print("invalid interpolation kind!")
         return
@@ -95,7 +136,7 @@ def compare_interps(kind, t, y, x_remap, x_dec, y_dec):
 def main():
     dec_factor = 10
 
-    t = np.linspace(0, 10, 1001)
+    t = np.linspace(0, 100, 1001)
     y = [t[i]**2 + 3 * t[i] + 1 for i in range(len(t))]
     x_remap = [x / dec_factor for x in range(0, len(t))]
     x_dec = x_remap[::10]
