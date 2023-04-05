@@ -4,10 +4,17 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 def boxcar(x, l = -0.5, r = 0.5):
-    return (x > l) * (x <= r)
+    return (x >= l) * (x < r)
 
 def triangular(x):
     return (1 - abs(x)) * boxcar(x, -1, 1)
+
+def keys(x):
+    '''Keys' cubic interpolation function, blatantly stolen from
+    https://en.wikipedia.org/wiki/Bicubic_interpolation
+    and https://www.ncorr.com/download/publications/keysbicubic.pdf'''
+    return ((1.5 * abs(x)**3 - 2.5 * abs(x)**2 + 1) * boxcar(abs(x), 0, 1)
+          + (-0.5 * abs(x)**3 + 2.5 * abs(x)**2 - 4 * abs(x) + 2) * boxcar(abs(x), 1, 2))
 
 def interpolate(x_r, x_dec, y_dec, kernel):
     y_vals = []
@@ -17,7 +24,6 @@ def interpolate(x_r, x_dec, y_dec, kernel):
             acc += p_y * kernel(x - p_x)
 
         y_vals.append(acc)
-
     return y_vals
 
 def coeffs(y1, y2, y3, x1, x2, x3):
@@ -58,6 +64,8 @@ def compare_interps(kind, t, y, x_remap, x_dec, y_dec):
         inter_y = interpolate(x_remap, x_dec, y_dec, triangular)
     elif (kind == "quadratic"):
         inter_y = quadratic(x_remap, x_dec, y_dec)
+    elif (kind == "cubic"):
+        inter_y = interpolate(x_remap, x_dec, y_dec, keys)
     else:
         print("invalid interpolation kind!")
         return
@@ -96,6 +104,7 @@ def main():
     compare_interps("nearest", t, y, x_remap, x_dec, y_dec)
     compare_interps("linear", t, y, x_remap, x_dec, y_dec)
     compare_interps("quadratic", t, y, x_remap, x_dec, y_dec)
+    compare_interps("cubic", t, y, x_remap, x_dec, y_dec)
 
 
 if __name__ == '__main__':
