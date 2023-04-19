@@ -41,6 +41,34 @@ def find_point_right(i, data, mask, default_value=0):
     return len(data), default_value
 
 
+def nn(data, mask):
+    x = 0
+    (x0, y0), (x1, y1) = (-1, 0), find_point_right(x, data, mask)
+    if (x1 == len(data)):
+        #No data points found! This is expected in some cases. Perform no interpolation
+        return data, mask
+
+    halfpoint = (x1 - x0) / 2
+
+    while x < len(data):
+        # Mask marks if data for this point is provided in input
+        # data-point with given value, start new interpolation range
+        if (mask[x] == 1):
+            (x0, y0) = x, data[x]
+            (x1, y1) = find_point_right(x, data, mask)
+            halfpoint = (x1 - x0) / 2
+        else:
+            # Interpolate
+            if (x >= halfpoint):
+                data[x] = y1
+            else:
+                data[x] = y0
+            # Mark point as containing value, so it can be used in next stage of 2D interpolation
+            mask[x] = 1
+        x += 1
+    return data, mask
+
+
 def linear(data, mask):
     x = 0
     (x0, y0), (x1, y1) = (-1, 0), find_point_right(x, data, mask)
@@ -101,31 +129,48 @@ def quadratic(data, mask):
     return data, mask
 
 
-def nn(data, mask):
+def coeffs_cubic(x, y):
+    if len(x) != len(y) or len(x) != 4:
+        raise ValueError("Cubic interpolation requires 4 points")
+    return np.linalg.solve(
+        np.array([[x[0]**3, x[0]**2, x[0], 1], [x[1]**3, x[1]**2, x[1], 1],
+                  [x[2]**3, x[2]**2, x[2], 1], [x[3]**3, x[3]**2, x[3], 1]]),
+        np.array([y[0], y[1], y[2], y[3]]))
+
+
+#https://home.agh.edu.pl/~zak/downloads/MN3-2012.pdf slide 12
+def cubic(data, mask):
     x = 0
     (x0, y0), (x1, y1) = (-1, 0), find_point_right(x, data, mask)
     if (x1 == len(data)):
         #No data points found! This is expected in some cases. Perform no interpolation
         return data, mask
 
-    halfpoint = (x1 - x0) / 2
+    (x2, y2) = find_point_right(x1, data, mask)
+    (x3, y3) = find_point_right(x2, data, mask)
+
+    a, b, c, d = coeffs_cubic([x0, x1, x2, x3], [y0, y1, y2, y3])
 
     while x < len(data):
-        # Mask marks if data for this point is provided in input
-        # data-point with given value, start new interpolation range
-        if (mask[x] == 1):
-            (x0, y0) = x, data[x]
-            (x1, y1) = find_point_right(x, data, mask)
-            halfpoint = (x1 - x0) / 2
-        else:
-            # Interpolate
-            if (x >= halfpoint):
-                data[x] = y1
-            else:
-                data[x] = y0
-            # Mark point as containing value, so it can be used in next stage of 2D interpolation
+        if (x == x3):
+            (x0, y0) = (x3, y3)
+            (x1, y1) = find_point_right(x0, data, mask)
+            (x2, y2) = find_point_right(x1, data, mask)
+            (x3, y3) = find_point_right(x2, data, mask)
+
+            #edge case (literally). Act like there's further points beyond the end of image with value 0
+            if (x2 <= x1):
+                x2 = x1 + (x1 - x0)
+            if (x3 <= x2):
+                x3 = x2 + (x2 - x1)
+
+            a, b, c, d = coeffs_cubic([x0, x1, x2, x3], [y0, y1, y2, y3])
+        elif (mask[x] != 1):
+            #interpolate
+            data[x] = max(min(a * x**3 + b * x**2 + c * x + d, 255), 0)
             mask[x] = 1
         x += 1
+
     return data, mask
 
 
@@ -153,7 +198,7 @@ def bilinear_interpolation(mosaic, mask, interp_f):
     return output
 
 
-pic = Image.open("test2.jpg")
+pic = Image.open("test1.png")
 img = np.array(pic, dtype=np.uint8)
 
 mask = make_mask(img.shape, window_xtrans)
@@ -165,6 +210,6 @@ result.save("mask.png")
 result = Image.fromarray(mosaic)
 result.save("output.png")
 
-output = bilinear_interpolation(mosaic, mask, quadratic)
+output = bilinear_interpolation(mosaic, mask, cubic)
 output = Image.fromarray(output)
 output.save("interpolated.png")
