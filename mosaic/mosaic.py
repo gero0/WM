@@ -174,7 +174,7 @@ def cubic(data, mask):
     return data, mask
 
 
-def bilinear_interpolation(mosaic, mask, interp_f):
+def interpolation_2d(mosaic, mask, interp_f):
     output = np.zeros(mosaic.shape, dtype=np.uint8)
     h, w, _ = mosaic.shape
 
@@ -210,6 +210,6 @@ result.save("mask.png")
 result = Image.fromarray(mosaic)
 result.save("output.png")
 
-output = bilinear_interpolation(mosaic, mask, cubic)
+output = interpolation_2d(mosaic, mask, cubic)
 output = Image.fromarray(output)
 output.save("interpolated.png")
