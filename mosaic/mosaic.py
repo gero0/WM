@@ -30,18 +30,7 @@ def make_mosaic(img, mask):
     return img * mask
 
 
-# def find_point_left(i, data, mask):
-#     #cast to make sure integer is signed
-#     pos = int(i) - 1
-
-#     while (pos >= 0):
-#         if mask[pos]:
-#             return pos, data[pos]
-#         pos -= 1
-#     return -1, 0
-
-
-def find_point_right(i, data, mask):
+def find_point_right(i, data, mask, default_value=0):
     pos = i + 1
 
     while (pos < len(data)):
@@ -49,7 +38,7 @@ def find_point_right(i, data, mask):
             return pos, data[pos]
         pos += 1
 
-    return len(data), 0
+    return len(data), default_value
 
 
 def linear(data, mask):
@@ -74,13 +63,51 @@ def linear(data, mask):
     return data, mask
 
 
+def coeffs(x, y):
+    if len(x) != len(y) or len(x) != 3:
+        raise ValueError("Quadratic interpolation requires 3 points")
+    return np.linalg.solve(
+        np.array([[x[0]**2, x[0], 1], [x[1]**2, x[1], 1], [x[2]**2, x[2], 1]]),
+        np.array([y[0], y[1], y[2]]))
+
+
+def quadratic(data, mask):
+    x = 0
+    (x0, y0), (x1, y1) = (-1, 0), find_point_right(x, data, mask)
+    if (x1 == len(data)):
+        #No data points found! This is expected in some cases. Perform no interpolation
+        return data, mask
+
+    (x2, y2) = find_point_right(x1, data, mask)
+    a, b, c = coeffs([x0, x1, x2], [y0, y1, y2])
+
+    while x < len(data):
+        #reached the end of interp. range, start a new one
+        if (x == x2):
+            (x0, y0) = (x2, y2)
+            (x1, y1) = find_point_right(x0, data, mask)
+            (x2, y2) = find_point_right(x1, data, mask)
+            #edge case (literally). Act like there's a further point beyond the end of image with value 0
+            if (x1 == x2):
+                x2 += (x1 - x0)
+            a, b, c = coeffs([x0, x1, x2], [y0, y1, y2])
+        elif (mask[x] != 1):
+            # Interpolate
+            data[x] = max(min(a * x**2 + b * x + c, 255),
+                          0)  #why is there no clamp function?
+            # Mark point as containing value, so it can be used in next stage of 2D interpolation
+            mask[x] = 1
+        x += 1
+    return data, mask
+
+
 def nn(data, mask):
     x = 0
     (x0, y0), (x1, y1) = (-1, 0), find_point_right(x, data, mask)
     if (x1 == len(data)):
         #No data points found! This is expected in some cases. Perform no interpolation
         return data, mask
-    
+
     halfpoint = (x1 - x0) / 2
 
     while x < len(data):
@@ -101,6 +128,7 @@ def nn(data, mask):
         x += 1
     return data, mask
 
+
 def bilinear_interpolation(mosaic, mask, interp_f):
     output = np.zeros(mosaic.shape, dtype=np.uint8)
     h, w, _ = mosaic.shape
@@ -108,6 +136,7 @@ def bilinear_interpolation(mosaic, mask, interp_f):
     #Perform interpolation on each color channel
     for channel in range(3):
         #Interpolate by rows
+        print(f"Channel {channel}, interpolating rows...")
         for row in range(h):
             interp_row, interp_mask = interp_f(mosaic[row, :, channel],
                                                mask[row, :, channel])
@@ -115,6 +144,7 @@ def bilinear_interpolation(mosaic, mask, interp_f):
             mask[row, :, channel] = interp_mask
 
         #Then by columns. Note we're using previous stage's output as input here
+        print(f"Channel {channel}, interpolating columns...")
         for column in range(w):
             interp_col, _mask = interp_f(output[:, column, channel],
                                          mask[:, column, channel])
@@ -126,7 +156,7 @@ def bilinear_interpolation(mosaic, mask, interp_f):
 pic = Image.open("test2.jpg")
 img = np.array(pic, dtype=np.uint8)
 
-mask = make_mask(img.shape, window_bayer)
+mask = make_mask(img.shape, window_xtrans)
 mosaic = make_mosaic(img, mask)
 
 result = Image.fromarray(mask * 255)
@@ -135,6 +165,6 @@ result.save("mask.png")
 result = Image.fromarray(mosaic)
 result.save("output.png")
 
-output = bilinear_interpolation(mosaic, mask, nn)
+output = bilinear_interpolation(mosaic, mask, quadratic)
 output = Image.fromarray(output)
 output.save("interpolated.png")
