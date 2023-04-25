@@ -128,8 +128,9 @@ def compare_interps(kind, t, y, x_remap, x_dec, y_dec):
     plt.clf()
     plt.plot(t, y, 'b')
     plt.plot(t, inter_y, 'r')
-    plt.plot(t, sci_y, 'g')
+    # plt.plot(t, sci_y, 'g')
     plt.savefig(f"{kind}.png")
+    return inter_y
 
 def main():
     dec_factor = 10
@@ -140,10 +141,19 @@ def main():
     x_dec = x_remap[::10]
     y_dec = y[::10]
 
-    compare_interps("nearest", t, y, x_remap, x_dec, y_dec)
-    compare_interps("linear", t, y, x_remap, x_dec, y_dec)
-    compare_interps("quadratic", t, y, x_remap, x_dec, y_dec)
-    compare_interps("cubic", t, y, x_remap, x_dec, y_dec)
+    nei = compare_interps("nearest", t, y, x_remap, x_dec, y_dec)
+    lin = compare_interps("linear", t, y, x_remap, x_dec, y_dec)
+    qua = compare_interps("quadratic", t, y, x_remap, x_dec, y_dec)
+    cub = compare_interps("cubic", t, y, x_remap, x_dec, y_dec)
+
+    plt.clf()
+    plt.plot(t[0:6], y[0:6], 'b-p', )
+    plt.plot(t[0:6], nei[0:6], 'r')
+    plt.plot(t[0:6], lin[0:6], 'g')
+    plt.plot(t[0:6], qua[0:6], 'k')
+    plt.plot(t[0:6], cub[0:6], 'y')
+    plt.legend(("original", "NN", "linear", "quadratic", "cubic"))
+    plt.savefig("closeup.png")
 
 
 if __name__ == '__main__':
