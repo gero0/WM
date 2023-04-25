@@ -6,6 +6,9 @@ from scipy.interpolate import interp1d
 def boxcar(x, l = -0.5, r = 0.5):
     return (x >= l) * (x < r)
 
+def boxcar_r(x, l = -0.5, r = 0.5):
+    return (x > l) * (x <= r)
+
 def triangular(x):
     return (1 - abs(x)) * boxcar(x, -1, 1)
 
@@ -98,7 +101,7 @@ def compare_interps(kind, t, y, x_remap, x_dec, y_dec):
 
     start = time.time()
     if (kind == "nearest"):
-        inter_y = interpolate(x_remap, x_dec, y_dec, boxcar)
+        inter_y = interpolate(x_remap, x_dec, y_dec, boxcar_r)
     elif (kind == "linear"):
         inter_y = interpolate(x_remap, x_dec, y_dec, triangular)
     elif (kind == "quadratic"):
