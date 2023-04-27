@@ -198,18 +198,50 @@ def interpolation_2d(mosaic, mask, interp_f):
     return output
 
 
-pic = Image.open("test1.png")
-img = np.array(pic, dtype=np.uint8)
+def mse_img(img1, img2):
+    mses = [0, 0, 0]
+    for c in range(3):
+        mses[c] = np.square(img1[:, :, c] - img2[:, :, c]).mean()
 
-mask = make_mask(img.shape, window_xtrans)
-mosaic = make_mosaic(img, mask)
+    return mses
 
-result = Image.fromarray(mask * 255)
-result.save("mask.png")
 
-result = Image.fromarray(mosaic)
-result.save("output.png")
+def mae_img(img1, img2):
+    mses = [0, 0, 0]
+    for c in range(3):
+        mses[c] = np.abs(img1[:, :, c] - img2[:, :, c]).mean()
 
-output = interpolation_2d(mosaic, mask, cubic)
-output = Image.fromarray(output)
-output.save("interpolated.png")
+    return mses
+
+
+def save_img(array, name):
+    image = Image.fromarray(array)
+    image.save(name)
+
+
+pic = Image.open("lenna.png")
+original = np.array(pic, dtype=np.uint8)
+
+mask = make_mask(original.shape, window_bayer)
+mosaic = make_mosaic(original, mask)
+
+save_img(mask * 255, "mask.png")
+save_img(mosaic, "mosaic.png")
+
+interp_nn = interpolation_2d(mosaic, mask.copy(), nn)
+interp_linear = interpolation_2d(mosaic, mask.copy(), linear)
+interp_quadratic = interpolation_2d(mosaic, mask.copy(), quadratic)
+interp_cubic = interpolation_2d(mosaic, mask.copy(), cubic)
+
+results = {
+    "nn": interp_nn,
+    "linear": interp_linear,
+    "quadratic": interp_quadratic,
+    "cubic": interp_cubic
+}
+
+for key in results:
+    save_img(results[key], key + ".png")
+    print(key)
+    print("MSE:", mse_img(original, results[key]))
+    print("MAE:", mae_img(original, results[key]))
