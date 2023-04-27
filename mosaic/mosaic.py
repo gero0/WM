@@ -199,18 +199,20 @@ def interpolation_2d(mosaic, mask, interp_f):
 
 
 def mse_img(img1, img2):
-    mses = [0, 0, 0]
+    mses = [0, 0, 0, 0]
     for c in range(3):
         mses[c] = np.square(img1[:, :, c] - img2[:, :, c]).mean()
 
+    mses[3] = sum(mses[0:3])
     return mses
 
 
 def mae_img(img1, img2):
-    mses = [0, 0, 0]
+    mses = [0, 0, 0, 0]
     for c in range(3):
         mses[c] = np.abs(img1[:, :, c] - img2[:, :, c]).mean()
 
+    mses[3] = sum(mses[0:3])
     return mses
 
 
@@ -242,6 +244,13 @@ results = {
 
 for key in results:
     save_img(results[key], key + ".png")
-    print(key)
-    print("MSE:", mse_img(original, results[key]))
-    print("MAE:", mae_img(original, results[key]))
+
+print("MSE")
+for key in results:
+    (r, g, b, t) = mse_img(original, results[key])
+    print(f"{key} {round(r,2)} {round(g, 2)} {round(b, 2)} {round(t,2)}")
+
+print("MAE")
+for key in results:
+    (r, g, b, t) = mae_img(original, results[key])
+    print(f"{key} {round(r,2)} {round(g,2)} {round(b,2)} {round(t,2)}")
