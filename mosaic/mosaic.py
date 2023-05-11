@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import itertools as it
+import time
 
 # 'R': 0,
 # 'G': 1,
@@ -224,16 +225,26 @@ def save_img(array, name):
 pic = Image.open("lenna.png")
 original = np.array(pic, dtype=np.uint8)
 
-mask = make_mask(original.shape, window_bayer)
+mask = make_mask(original.shape, window_xtrans)
 mosaic = make_mosaic(original, mask)
 
 save_img(mask * 255, "mask.png")
 save_img(mosaic, "mosaic.png")
 
+start = time.time()
 interp_nn = interpolation_2d(mosaic, mask.copy(), nn)
+nn_end = time.time()
 interp_linear = interpolation_2d(mosaic, mask.copy(), linear)
+lin_end = time.time()
 interp_quadratic = interpolation_2d(mosaic, mask.copy(), quadratic)
+quad_end = time.time()
 interp_cubic = interpolation_2d(mosaic, mask.copy(), cubic)
+cubic_end = time.time()
+
+nn_time = nn_end - start
+lin_time = lin_end - nn_end
+quad_time = quad_end - lin_end
+cubic_time = cubic_end - quad_end
 
 results = {
     "nn": interp_nn,
@@ -254,3 +265,5 @@ print("MAE")
 for key in results:
     (r, g, b, t) = mae_img(original, results[key])
     print(f"{key} {round(r,2)} {round(g,2)} {round(b,2)} {round(t,2)}")
+
+print(f"Times: NN:{nn_time} LIN:{lin_time} QUAD:{quad_time} CUBIC:{cubic_time}")

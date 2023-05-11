@@ -38,7 +38,7 @@ def main():
 
         input = output
 
-    output = output[half+1:half + img.shape[0], half+1:half + img.shape[1]]
+    output = output[half:half + img.shape[0], half:half + img.shape[1]]
     output = Image.fromarray(output)
     output.save("rotated.png")
 
