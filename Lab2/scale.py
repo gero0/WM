@@ -49,23 +49,32 @@ def interpolate(input, scale_factor, output):
         output[ny, nx, nc] = input[y, x, c]
 
 
-def main():
-    fname = sys.argv[1]
-    scale_factor = float(sys.argv[2])
-    pic = Image.open(fname)
-    img = np.array(pic, dtype=np.uint8)
-    sy, sx, c_count = img.shape
+def scale(input, scale_factor):
+    sy, sx, c_count = input.shape
     output = np.zeros((int(np.ceil(
         sy * scale_factor)), int(np.ceil(sx * scale_factor)), c_count),
                       dtype=np.uint8)
 
     if (len(sys.argv) > 3 and sys.argv[3] == "nn"):
-        interpolate(img, scale_factor, output)
+        interpolate(input, scale_factor, output)
     else:
-        interpolate_lin(img, scale_factor, output)
+        interpolate_lin(input, scale_factor, output)
+    return output
 
-    output = Image.fromarray(output)
-    output.save("scaled.png")
+def main():
+    fname = sys.argv[1]
+    scale_factor = float(sys.argv[2])
+    pic = Image.open(fname)
+    img = np.array(pic, dtype=np.uint8)
+
+    output = scale(img, scale_factor)
+    output_img = Image.fromarray(output)
+    output_img.save("scaled.png")
+
+    output = scale(output, 1 / scale_factor)
+    output_img = Image.fromarray(output)
+    output_img.save("reverted.png")
+    
 
 
 if __name__ == "__main__":

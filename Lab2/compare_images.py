@@ -29,8 +29,10 @@ def main():
     img1 = np.array(img1, dtype=np.uint8)
     img2 = np.array(img2, dtype=np.uint8)
 
-    print(f"MSE is: {mse_img(img1, img2)}")
-    print(f"MAE is: {mae_img(img1,img2)}")
+    r,g,b,s = mse_img(img1, img2)
+    print(f"MSE is:\n {r:.2f}\t{g:.2f}\t{b:.2f}\t{s:.2f}")
+    r,g,b,s = mae_img(img1, img2)
+    print(f"MAE is:\n {r:.2f}\t{g:.2f}\t{b:.2f}\t{s:.2f}")
 
 
 if __name__ == "__main__":
